@@ -1,4 +1,4 @@
-# Tokopedia Senior Software Engineer Test
+# Senior Software Engineer Test
 
 The goal of this test is to assert (to some degree) your coding and architectural skills. You're given a simple problem so you can focus on showcasing development techniques. It's up to you to strike the right balance between rapidly meeting our test criteria and showing off what you can do.
 
@@ -35,11 +35,11 @@ We have provided some containers to help build your application in Go, with a va
 
 ## Instructions
 
-1. Clone this repository.
-- Create a new branch called `dev`.
+1. Fork this repository.
 - Run `docker-compose up -d` to start the development environment.
 - Visit `http://localhost:9000` to see the contents of the web container and develop your application.
-- Create a pull request from your `dev` branch to the master branch. This PR should contain setup instructions for your application and a breakdown of the packages you chose to use and design decisions you made.
+- Create a pull request from your `fork` to the `tokopedia-interview:master` branch. 
+- Pull Request should contain setup instructions for your application and a breakdown of the packages you chose to use and design decisions you made.
 
 ### API
 
