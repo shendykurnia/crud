@@ -1,0 +1,38 @@
+version: '2'
+services:
+    go:
+        build: .
+        ports:
+            - "9000:9000"
+        links:
+            - postgres
+            - nsqd
+            - redis
+        environment:
+            DEBUG: 'true'
+            PORT: '9000'
+
+    postgres:
+        image: onjin/alpine-postgres:9.5
+        restart: unless-stopped
+        ports:
+            - "5432:5432"
+        environment:
+            LC_ALL: C.UTF-8
+            POSTGRES_USER: tokopedia
+            POSTGRES_PASSWORD: tokopedia
+            POSTGRES_DB: tokopedia
+
+    nsqd:
+        image: nsqio/nsq
+        restart: unless-stopped
+        ports:
+          - "4150:4150"
+          - "4151:4151"
+        command: /nsqd -broadcast-address=nsqd
+  
+    redis:
+        image: sickp/alpine-redis:3.2.2
+        restart: unless-stopped
+        ports:
+            - "6379:6379"
