@@ -1,4 +1,4 @@
-package myrouter
+package mymodel
 
 import (
     "testing"

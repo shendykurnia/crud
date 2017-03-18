@@ -9,7 +9,7 @@ import (
 type route struct {
     patternStr string
     pattern *regexp.Regexp
-    methods map[string]interface{}
+    methods []string
     handler func(http.ResponseWriter, *http.Request, *map[string]string)
 }
 
@@ -17,7 +17,7 @@ type MyHandler struct {
     routes []*route
 }
 
-func (h *MyHandler) HandleFunc(patternStr string, methods map[string]interface{}, handler func(http.ResponseWriter, *http.Request, *map[string]string)) {
+func (h *MyHandler) HandleFunc(patternStr string, methods []string, handler func(http.ResponseWriter, *http.Request, *map[string]string)) {
     pattern := regexp.MustCompile(patternStr)
     h.routes = append(h.routes, &route{patternStr, pattern, methods, handler})
 }
@@ -26,7 +26,7 @@ func (h *MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     for _, route := range h.routes {
         // check method first because it's cheaper compared to regex match
         validMethod := false
-        for m, _ := range route.methods {
+        for _, m := range route.methods {
             if strings.ToLower(r.Method) == strings.ToLower(m) {
                 validMethod = true
                 break
