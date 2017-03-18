@@ -10,16 +10,16 @@ type route struct {
     patternStr string
     pattern *regexp.Regexp
     methods map[string]interface{}
-    handler http.Handler
+    handler func(http.ResponseWriter, *http.Request, *map[string]string)
 }
 
 type MyHandler struct {
     routes []*route
 }
 
-func (h *MyHandler) HandleFunc(patternStr string, methods map[string]interface{}, handler func(http.ResponseWriter, *http.Request)) {
+func (h *MyHandler) HandleFunc(patternStr string, methods map[string]interface{}, handler func(http.ResponseWriter, *http.Request, *map[string]string)) {
     pattern := regexp.MustCompile(patternStr)
-    h.routes = append(h.routes, &route{patternStr, pattern, methods, http.HandlerFunc(handler)})
+    h.routes = append(h.routes, &route{patternStr, pattern, methods, handler})
 }
 
 func (h *MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -33,24 +33,23 @@ func (h *MyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
             }
         }
 
-        // change pattern from /a/{id}/b to /a/.*/b
-        patternStr := route.patternStr
-        re := regexp.MustCompile(`{.*}`)
-        patternStrToMatch := re.ReplaceAllString(patternStr, `.*`)
-        patternToMatch := regexp.MustCompile(patternStrToMatch)
-
         path := r.URL.Path
-        if !validMethod || !patternToMatch.MatchString(path) {
+        if !validMethod || !route.pattern.MatchString(path) {
             continue
         }
 
-        route.handler.ServeHTTP(w, r)
+        slugs := map[string]string{}
+        matches := route.pattern.FindStringSubmatch(path)
+        names := route.pattern.SubexpNames()
+        for i, match := range matches {
+                if i != 0 {
+                    slugs[names[i]] = match
+                }
+        }
+
+        route.handler(w, r, &slugs)
         return
     }
 
     http.NotFound(w, r)
-}
-
-func GetUrlSlug(path string, ) map[string]string {
-
 }

@@ -5,6 +5,7 @@ import (
     "net/http"
     "net/http/httptest"
     "fmt"
+    "encoding/json"
 )
 
 func Test(t *testing.T) {
@@ -18,8 +19,9 @@ func Test(t *testing.T) {
         fmt.Fprintf(w, "2")
     })
 
-    myHandler.HandleFunc("^/a/{id}/b$", map[string]interface{}{"PUT": true}, func(w http.ResponseWriter, r *http.Request, slugs *map[string]string) {
-        fmt.Fprintf(w, "3")
+    myHandler.HandleFunc("^/a/(?P<id>.*)/b$", map[string]interface{}{"PUT": true}, func(w http.ResponseWriter, r *http.Request, slugs *map[string]string) {
+        jsonStr, _ := json.Marshal(*slugs)
+        fmt.Fprintf(w, "3|" + string(jsonStr))
     })
 
     for _, testCase := range []struct {
@@ -30,9 +32,9 @@ func Test(t *testing.T) {
     }{
         {"GET", "/a", http.StatusOK, "1"},
         {"POST", "/a", http.StatusOK, "2"},
-        {"PUT", "/a/{id}/b", http.StatusOK, "3"},
+        {"PUT", "/a/{id}/b", http.StatusOK, `3|{"id":"{id}"}`},
         {"GET", "/a/b", http.StatusNotFound, ""},
-        {"PUT", "/a/3/b", http.StatusOK, "3"},
+        {"PUT", "/a/3/b", http.StatusOK, `3|{"id":"3"}`},
     } {
         req, err := http.NewRequest(testCase.method, testCase.path, nil)
         if err != nil {
