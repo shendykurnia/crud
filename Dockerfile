@@ -19,9 +19,9 @@ ADD config/ /appconfig
 RUN go get -v -u github.com/kardianos/govendor
 
 # app
-RUN mkdir /go/src/app
-ADD src/web/ /go/src/app
-WORKDIR /go/src/app
+RUN mkdir /go/src/web
+ADD src/web/ /go/src/web
+WORKDIR /go/src/web
 RUN govendor sync
 RUN go build -o /bin/app app.go
 
