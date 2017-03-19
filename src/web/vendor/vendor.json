@@ -1,6 +1,17 @@
 {
 	"comment": "",
 	"ignore": "test",
-	"package": [],
+	"package": [
+		{
+			"checksumSHA1": "Do0VQi7fCKcBUZ5q1Um86mRMlTI=",
+			"path": "mymodel",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "aXgq5BrGRV/4s0uCNCLiDPwU16Q=",
+			"path": "myrouter",
+			"revision": ""
+		}
+	],
 	"rootPath": "web"
 }

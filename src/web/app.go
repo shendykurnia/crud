@@ -7,11 +7,15 @@ import (
     "strconv"
     "encoding/json"
     "fmt"
-    "flag"
+    // "flag"
 )
 
 func main() {
-    configPath := flag.String("config", "", "config path")
+    // TODO take parameter of config path to initialize stack (datastore, cache, and queue)
+    // configPath := flag.String("config", "", "config path")
+
+    var datastore Datastore = &MockDatastore{}
+    stack := Stack{&datastore, nil, nil}
 
     myHandler := MyHandler{}
 
@@ -21,6 +25,7 @@ func main() {
         search := query["search"]
         page := query["page"]
 
+        // gracefully handle page's value
         pageInt := 1
         if len(page) > 0 {
             pageInt, err := strconv.Atoi(page[0])
@@ -38,7 +43,7 @@ func main() {
             "status": "error",
         }
         myResponse := defaultResponse
-        orders, err := GetOrders(searchStr, pageInt)
+        orders, err := GetOrders(&stack, searchStr, pageInt)
         if err == nil {
             myResponse = map[string]interface{}{
                 "status": "success",
@@ -60,9 +65,9 @@ func main() {
         myResponse := defaultResponse
 
         r.ParseForm()
-        productJson := ProductJson{}
+        createOrderJson := CreateOrderJson{}
         for key, _ := range r.Form {
-            err := json.Unmarshal([]byte(key), &productJson)
+            err := json.Unmarshal([]byte(key), &createOrderJson)
             if err != nil {
                 myResponse["error"] = "Invalid input"
                 respondWithJson(&w, myResponse)
@@ -71,7 +76,7 @@ func main() {
             break
         }
 
-        order, err := CreateOrder(&productJson)
+        order, err := CreateOrder(&stack, &createOrderJson)
         if err == nil {
             myResponse = map[string]interface{}{
                 "status": "success",
@@ -102,7 +107,7 @@ func main() {
         isValidOrder := false
         idInt, err := strconv.Atoi(id)
         if err == nil {
-            if order, err := GetOrder(idInt); order != nil && err == nil {
+            if order, err := GetOrder(&stack, idInt); order != nil && err == nil {
                 isValidOrder = true
             }
         }
@@ -129,7 +134,7 @@ func main() {
                     continue
                 }
 
-                if err := UpdateOrderStatus(idInt, _status); err == nil {
+                if err := UpdateOrderStatus(&stack, idInt, _status); err == nil {
                     myResponse["status"] = "success"
                     break
                 }

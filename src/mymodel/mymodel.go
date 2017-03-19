@@ -59,6 +59,7 @@ type Datastore interface {
 }
 
 // Postgres datastore
+// TODO
 
 type PostgresDatastore struct {
     
@@ -152,7 +153,7 @@ func (p *MockDatastore) getOrderCollection(search string, page int) ([]*Order, e
     // clone order to be returned, so caller cannot change stored object directly
     orders := []*Order{}
     for _, order := range collection {
-        orders = append(orders, createOrder(order))
+        orders = append(orders, createOrderFromEfficientOrder(order))
     }
 
     return orders, nil
@@ -162,7 +163,7 @@ func (p *MockDatastore) getOrder(id int) (*Order, error) {
     for _, order := range p.orders {
         if order.id == id {
             // clone order to be returned, so caller cannot change stored object directly
-            return createOrder(order), nil
+            return createOrderFromEfficientOrder(order), nil
         }
     }
 
@@ -217,7 +218,7 @@ func (p *MockDatastore) createOrder(createOrderJson *CreateOrderJson) (*Order, e
     p.orders = append(p.orders, &order)
 
     // clone order to be returned, so caller cannot change stored object directly
-    return createOrder(&order), nil
+    return createOrderFromEfficientOrder(&order), nil
 }
 
 func (p *MockDatastore) updateOrderStatus(id int, status string) error {
@@ -252,7 +253,7 @@ func (p *MockDatastore) updateOrderStatus(id int, status string) error {
     return &ModelError{"Failed to update order status somehow"}
 }
 
-func createOrder(order *EfficientOrder) *Order {
+func createOrderFromEfficientOrder(order *EfficientOrder) *Order {
     products := []Product{}
     for _, product := range order.products {
         products = append(products, (*cloneProduct(product)))
@@ -291,6 +292,7 @@ func cloneProduct(product *Product) *Product {
 }
 
 // Cache
+// TODO
 type Cache interface {
     init() error
     set(key string, obj *interface{}) error
@@ -330,6 +332,7 @@ func (c *MockCache) get(key string) (*interface{}, error) {
 }
 
 // Queue
+// TODO
 type Queue interface {
     init() error
     enqueue(obj *interface{}) error
@@ -370,26 +373,33 @@ func (q *MockQueue) dequeue() (*interface{}, error) {
 
 // Stack
 type Stack struct {
-    datastore *Datastore
-    cache *Cache
-    queue *Queue
+    Datastore *Datastore
+    Cache *Cache
+    Queue *Queue
 }
 
 // functions
 func GetOrders(stack *Stack, search string, page int) ([]*Order, error) {
-    return []*Order{}, nil
+    // TODO utilize cache
+    datastore := stack.Datastore
+    return (*datastore).getOrderCollection(search, page)
 }
 
-func CreateOrder(stack *Stack, productJson *ProductJson) (*Order, error) {
-    return &Order{}, nil
+func CreateOrder(stack *Stack, createOrderJson *CreateOrderJson) (*Order, error) {
+    datastore := stack.Datastore
+    return (*datastore).createOrder(createOrderJson)
 }
 
 func GetOrder(stack *Stack, id int) (*Order, error) {
-    return &Order{}, nil
+    // TODO utilize cache
+    datastore := stack.Datastore
+    return (*datastore).getOrder(id)
 }
 
 func UpdateOrderStatus(stack *Stack, id int, status string) error {
-    return nil
+    // TODO utilize cache, bust key, and utilize queue especially when process an order
+    datastore := stack.Datastore
+    return (*datastore).updateOrderStatus(id, status)
 }
 
 // helper functions
