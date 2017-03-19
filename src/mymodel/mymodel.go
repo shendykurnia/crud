@@ -17,28 +17,28 @@ const (
 )
 
 type Order struct {
-    id int
-    shopId int
-    customerId int
-    status string
-    products []Product // tempting, but too scary to use []*Product here
-    created time.Time
+    Id int `json:"id"`
+    ShopId int `json:"shop_id"`
+    CustomerId int `json:"customer_id"`
+    Status string `json:"status"`
+    Products []Product `json:"products"` // tempting, but too scary to use []*Product here
+    Created time.Time `json:"created"`
 }
 
 type Product struct {
-    id int
-    name string
-    created time.Time
+    Id int `json:"id"`
+    Name string `json:"name"`
+    Created time.Time `json:"created"`
 }
 
 type ProductJson struct {
-    id int `json:"id"`
+    Id int `json:"id"`
 }
 
 type CreateOrderJson struct {
-    shopId int `json:"shop_id"`
-    customerId int `json:"customer_id"`
-    products []ProductJson `json:"products"`
+    ShopId int `json:"shop_id"`
+    CustomerId int `json:"customer_id"`
+    Products []ProductJson `json:"products"`
 }
 
 type ModelError struct {
@@ -110,9 +110,9 @@ type MockDatastore struct {
 func (p *MockDatastore) init() error {
     p.orders = []*EfficientOrder{}
     p.products = []*Product{
-        &Product{1, "Table", time.Now()},
-        &Product{2, "Chair", time.Now()},
-        &Product{3, "Pencil", time.Now()},
+        &Product{1, "Table", dummyTime()},
+        &Product{2, "Chair", dummyTime()},
+        &Product{3, "Pencil", dummyTime()},
     }
     return nil
 }
@@ -127,7 +127,7 @@ func (p *MockDatastore) getOrderCollection(search string, page int) ([]*Order, e
             isMatch := false
             for _, product := range order.products {
                 // simple matching logic, please don't judge my development skill based on this. this is just for simplicity sake
-                if strings.Index(strings.ToLower(product.name), strings.ToLower(search)) != -1 {
+                if strings.Index(strings.ToLower(product.Name), strings.ToLower(search)) != -1 {
                     isMatch = true
                     break
                 }
@@ -144,7 +144,7 @@ func (p *MockDatastore) getOrderCollection(search string, page int) ([]*Order, e
         return []*Order{}, nil
     }
     limit := offset + Limit
-    if len(collection) > limit {
+    if len(collection) < limit {
         limit = len(collection)
     }
     collection = collection[offset:limit]
@@ -187,31 +187,31 @@ func (p *MockDatastore) createOrder(createOrderJson *CreateOrderJson) (*Order, e
     }
 
     var products []*Product
-    if len(createOrderJson.products) == 0 {
+    if len(createOrderJson.Products) == 0 {
         return nil, &ModelError{"Order needs at least 1 product"}
     }
 
-    for _, product := range createOrderJson.products {
+    for _, product := range createOrderJson.Products {
         var foundProduct *Product
         foundProduct = nil
         for _, _product := range p.products {
-            if _product.id == product.id {
+            if _product.Id == product.Id {
                 foundProduct = _product
             }
         }
         if foundProduct == nil {
-            return nil, &ModelError{fmt.Sprintf("Invalid product (id: %d )", product.id)}
+            return nil, &ModelError{fmt.Sprintf("Invalid product (id: %d )", product.Id)}
         }
         products = append(products, foundProduct)
     }
 
     order := EfficientOrder{
         id: potentialId,
-        shopId: createOrderJson.shopId,
-        customerId: createOrderJson.customerId,
+        shopId: createOrderJson.ShopId,
+        customerId: createOrderJson.CustomerId,
         status: StatusCreated,
         products: products,
-        created: time.Now(),
+        created: dummyTime(),
     }
 
     p.orders = append(p.orders, &order)
@@ -238,12 +238,12 @@ func (p *MockDatastore) updateOrderStatus(id int, status string) error {
         return &ModelError{"Invalid status"}
     }
 
-    if _, isValidStatusChange := statusMap[order.status][status]; !isValidStatusChange {
+    if _, isValidStatusChange := statusMap[order.Status][status]; !isValidStatusChange {
         return &ModelError{"Invalid status change"}
     }
 
     for _, _order := range p.orders {
-        if order.id == _order.id {
+        if order.Id == _order.id {
             _order.status = status
             return nil
         }
@@ -258,37 +258,145 @@ func createOrder(order *EfficientOrder) *Order {
         products = append(products, (*cloneProduct(product)))
     }
     return &Order{
-        id: order.id,
-        shopId: order.shopId,
-        customerId: order.customerId,
-        status: order.status,
-        products: products,
-        created: order.created,
+        Id: order.id,
+        ShopId: order.shopId,
+        CustomerId: order.customerId,
+        Status: order.status,
+        Products: products,
+        Created: order.created,
     }
 }
 
 func cloneOrder(order *Order) *Order {
     products := []Product{}
-    for _, product := range order.products {
+    for _, product := range order.Products {
         products = append(products, (*cloneProduct(&product)))
     }
     return &Order{
-        id: order.id,
-        shopId: order.shopId,
-        customerId: order.customerId,
-        status: order.status,
-        products: products,
-        created: order.created,
+        Id: order.Id,
+        ShopId: order.ShopId,
+        CustomerId: order.CustomerId,
+        Status: order.Status,
+        Products: products,
+        Created: order.Created,
     }
 }
 
 func cloneProduct(product *Product) *Product {
     return &Product{
-        id: product.id,
-        name: product.name,
+        Id: product.Id,
+        Name: product.Name,
+        Created: product.Created,
     }
 }
 
 // Cache
+type Cache interface {
+    init() error
+    set(key string, obj *interface{}) error
+    get(key string) (*interface{}, error)
+}
+
+type RedisCache struct {
+
+}
+
+func (c *RedisCache) init() error {
+    return nil
+}
+
+func (c *RedisCache) set(key string, obj *interface{}) error {
+    return nil
+}
+
+func (c *RedisCache) get(key string) (*interface{}, error) {
+    return nil, nil
+}
+
+type MockCache struct {
+    
+}
+
+func (c *MockCache) init() error {
+    return nil
+}
+
+func (c *MockCache) set(key string, obj *interface{}) error {
+    return nil
+}
+
+func (c *MockCache) get(key string) (*interface{}, error) {
+    return nil, nil
+}
 
 // Queue
+type Queue interface {
+    init() error
+    enqueue(obj *interface{}) error
+    dequeue() (*interface{}, error)
+}
+
+type NsqQueue struct {
+
+}
+
+func (q *NsqQueue) init() error {
+    return nil
+}
+
+func (q *NsqQueue) enqueue(obj *interface{}) error {
+    return nil
+}
+
+func (q *NsqQueue) dequeue() (*interface{}, error) {
+    return nil, nil
+}
+
+type MockQueue struct {
+
+}
+
+func (q *MockQueue) init() error {
+    return nil
+}
+
+func (q *MockQueue) enqueue(obj *interface{}) error {
+    return nil
+}
+
+func (q *MockQueue) dequeue() (*interface{}, error) {
+    return nil, nil
+}
+
+// Stack
+type Stack struct {
+    datastore *Datastore
+    cache *Cache
+    queue *Queue
+}
+
+// functions
+func GetOrders(stack *Stack, search string, page int) ([]*Order, error) {
+    return []*Order{}, nil
+}
+
+func CreateOrder(stack *Stack, productJson *ProductJson) (*Order, error) {
+    return &Order{}, nil
+}
+
+func GetOrder(stack *Stack, id int) (*Order, error) {
+    return &Order{}, nil
+}
+
+func UpdateOrderStatus(stack *Stack, id int, status string) error {
+    return nil
+}
+
+// helper functions
+func dummyTime() time.Time {
+    location, err := time.LoadLocation("UTC")
+    if err != nil {
+        panic(err)
+    }
+    return time.Date(2017, 3, 19, 0, 0, 0, 0, location)
+}
