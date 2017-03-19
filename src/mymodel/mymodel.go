@@ -106,6 +106,7 @@ type EfficientOrder struct {
 type MockDatastore struct {
     orders []*EfficientOrder
     products []*Product
+    isInitialized bool
 }
 
 func (p *MockDatastore) init() error {
@@ -115,10 +116,17 @@ func (p *MockDatastore) init() error {
         &Product{2, "Chair", dummyTime()},
         &Product{3, "Pencil", dummyTime()},
     }
+
+    p.isInitialized = true
+
     return nil
 }
 
 func (p *MockDatastore) getOrderCollection(search string, page int) ([]*Order, error) {
+    if !p.isInitialized {
+        p.init()
+    }
+
     var collection []*EfficientOrder
 
     if len(search) == 0 {
@@ -160,6 +168,10 @@ func (p *MockDatastore) getOrderCollection(search string, page int) ([]*Order, e
 }
 
 func (p *MockDatastore) getOrder(id int) (*Order, error) {
+    if !p.isInitialized {
+        p.init()
+    }
+
     for _, order := range p.orders {
         if order.id == id {
             // clone order to be returned, so caller cannot change stored object directly
@@ -171,6 +183,10 @@ func (p *MockDatastore) getOrder(id int) (*Order, error) {
 }
 
 func (p *MockDatastore) createOrder(createOrderJson *CreateOrderJson) (*Order, error) {
+    if !p.isInitialized {
+        p.init()
+    }
+
     // generate id
     potentialId := 1
     orderIds := []int{}
@@ -201,7 +217,7 @@ func (p *MockDatastore) createOrder(createOrderJson *CreateOrderJson) (*Order, e
             }
         }
         if foundProduct == nil {
-            return nil, &ModelError{fmt.Sprintf("Invalid product (id: %d )", product.Id)}
+            return nil, &ModelError{fmt.Sprintf("Invalid product (id: %d)", product.Id)}
         }
         products = append(products, foundProduct)
     }
@@ -222,6 +238,10 @@ func (p *MockDatastore) createOrder(createOrderJson *CreateOrderJson) (*Order, e
 }
 
 func (p *MockDatastore) updateOrderStatus(id int, status string) error {
+    if !p.isInitialized {
+        p.init()
+    }
+    
     order, err := p.getOrder(id)
     if err != nil {
         return err

@@ -17,6 +17,10 @@ func main() {
     var datastore Datastore = &MockDatastore{}
     stack := Stack{&datastore, nil, nil}
 
+    http.ListenAndServe(":9000", initApp(&stack))
+}
+
+func initApp(stack *Stack) *MyHandler {
     myHandler := MyHandler{}
 
     // Get and search API
@@ -43,7 +47,7 @@ func main() {
             "status": "error",
         }
         myResponse := defaultResponse
-        orders, err := GetOrders(&stack, searchStr, pageInt)
+        orders, err := GetOrders(stack, searchStr, pageInt)
         if err == nil {
             myResponse = map[string]interface{}{
                 "status": "success",
@@ -76,12 +80,14 @@ func main() {
             break
         }
 
-        order, err := CreateOrder(&stack, &createOrderJson)
+        order, err := CreateOrder(stack, &createOrderJson)
         if err == nil {
             myResponse = map[string]interface{}{
                 "status": "success",
                 "data": order,
             }
+        } else {
+            myResponse["message"] = fmt.Sprintf("%v", err)
         }
 
         respondWithJson(&w, myResponse)
@@ -107,7 +113,7 @@ func main() {
         isValidOrder := false
         idInt, err := strconv.Atoi(id)
         if err == nil {
-            if order, err := GetOrder(&stack, idInt); order != nil && err == nil {
+            if order, err := GetOrder(stack, idInt); order != nil && err == nil {
                 isValidOrder = true
             }
         }
@@ -134,9 +140,11 @@ func main() {
                     continue
                 }
 
-                if err := UpdateOrderStatus(&stack, idInt, _status); err == nil {
+                if err := UpdateOrderStatus(stack, idInt, _status); err == nil {
                     myResponse["status"] = "success"
                     break
+                } else {
+                    myResponse["message"] = fmt.Sprintf("%v", err)
                 }
             }
         }
@@ -144,7 +152,7 @@ func main() {
         respondWithJson(&w, myResponse)
     })
 
-    http.ListenAndServe(":9000", &myHandler)
+    return &myHandler
 }
 
 func respondWithJson(w *http.ResponseWriter, obj interface{}) {
