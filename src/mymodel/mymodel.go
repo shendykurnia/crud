@@ -5,6 +5,7 @@ import (
     "sort"
     "fmt"
     "strings"
+    "sync"
 )
 
 const (
@@ -107,6 +108,8 @@ type MockDatastore struct {
     orders []*EfficientOrder
     products []*Product
     isInitialized bool
+    createOrderMux *sync.Mutex
+    updateOrderMux map[int]*sync.Mutex
 }
 
 func (p *MockDatastore) init() error {
@@ -118,6 +121,9 @@ func (p *MockDatastore) init() error {
     }
 
     p.isInitialized = true
+
+    p.createOrderMux = &sync.Mutex{}
+    p.updateOrderMux = map[int]*sync.Mutex{}
 
     return nil
 }
@@ -187,6 +193,9 @@ func (p *MockDatastore) createOrder(createOrderJson *CreateOrderJson) (*Order, e
         p.init()
     }
 
+    p.createOrderMux.Lock()
+    defer p.createOrderMux.Unlock()
+
     // generate id
     potentialId := 1
     orderIds := []int{}
@@ -242,6 +251,12 @@ func (p *MockDatastore) updateOrderStatus(id int, status string) error {
         p.init()
     }
     
+    if _, ok := p.updateOrderMux[id]; !ok {
+        p.updateOrderMux[id] = &sync.Mutex{}
+    }
+    p.updateOrderMux[id].Lock()
+    defer p.updateOrderMux[id].Unlock()
+
     order, err := p.getOrder(id)
     if err != nil {
         return err
