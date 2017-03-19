@@ -7,9 +7,12 @@ import (
     "strconv"
     "encoding/json"
     "fmt"
+    "flag"
 )
 
 func main() {
+    configPath := flag.String("config", "", "config path")
+
     myHandler := MyHandler{}
 
     // Get and search API
