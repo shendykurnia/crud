@@ -1,3 +1,67 @@
+# Getting Started
+
+The following are the steps to test my code in a clean install of Ubuntu 16.04. Feel free to test it on other OS.
+
+With Vagrant and VirtualBox (or other working vms) installed...
+```
+$ vagrant init ubuntu/xenial64
+$ vagrant up
+$ vagrant ssh
+```
+
+You are now inside an Ubuntu 16.04 box. Installing Docker... (steps are taken from [Docker Engine Installation for Ubuntu Page](https://docs.docker.com/engine/installation/linux/ubuntu/) and [Docker Compose Installation Page](https://docs.docker.com/compose/install/)
+```
+$ sudo apt-get update
+$ sudo apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    software-properties-common
+$ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+$ sudo add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+$ sudo apt-get update
+$ sudo apt-get install -y docker-ce
+$ curl -s -L https://github.com/docker/compose/releases/download/1.11.2/docker-compose-`uname -s`-`uname -m` | sudo tee /usr/local/bin/docker-compose > /dev/null
+$ sudo chmod +x /usr/local/bin/docker-compose
+```
+
+Now, let's pull and run the code...
+```
+sudo apt-get install -y git
+cd
+git clone https://github.com/shendykurnia/crud.git
+cd crud
+sudo docker-compose up -d
+chmod +x test.sh
+./test.sh
+```
+
+No news is good news! If _test.sh_ does not output anything, everything looks good.
+
+# Features
+
+- Router built from scratch which can get values from URL pattern
+- Thread safe
+- Package and app come with test files
+- Dependency injection
+
+# Shortcomings
+
+Something I am aware of that I would like to implement but got the chance yet.
+
+- Not storing to persistent datastore
+- No middleware
+- No asychronous processing
+- Not using caching layer
+- Not config driven (since no persistent datastore, cache, or queue utilized, no configuration needed)
+
+# Libraries
+- govendor
+
+
 # Senior Software Engineer Test
 
 The goal of this test is to assert (to some degree) your coding and architectural skills. You're given a simple problem so you can focus on showcasing development techniques. It's up to you to strike the right balance between rapidly meeting our test criteria and showing off what you can do.
